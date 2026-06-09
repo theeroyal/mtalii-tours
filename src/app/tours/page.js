@@ -5,12 +5,15 @@ import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
-import { tourPackages as defaultPackages } from '@/lib/data';
+import { tourPackages as defaultPackages, packageCategories } from '@/lib/data';
+import { formatPrice } from '@/lib/currency';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export default function Tours() {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [priceRange, setPriceRange] = useState('All');
   const [tourPackages, setTourPackages] = useState([]);
 
@@ -23,7 +26,7 @@ export default function Tours() {
     setTourPackages(storedPackages);
   }, []);
 
-  const categories = ['All', 'Safari', 'Trekking', 'Beach', 'Cultural'];
+  const categories = ['All', ...Object.keys(packageCategories)];
   const priceRanges = [
     { label: 'All', min: 0, max: Infinity },
     { label: 'Under $1500', min: 0, max: 1500 },
@@ -31,11 +34,20 @@ export default function Tours() {
     { label: 'Over $2000', min: 2000, max: Infinity },
   ];
 
+  const searchParams = useSearchParams();
+  const q = searchParams ? searchParams.get('q') || '' : '';
+
+  const getAverageRating = (reviews = []) => {
+    if (!reviews || !reviews.length) return 0;
+    return reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length;
+  };
+
   const filteredPackages = tourPackages.filter((pkg) => {
     const categoryMatch = selectedCategory === 'All' || pkg.category === selectedCategory;
     const range = priceRanges.find(r => r.label === priceRange);
     const priceMatch = pkg.price >= range.min && pkg.price < range.max;
-    return categoryMatch && priceMatch;
+    const textMatch = !q || [pkg.title, pkg.description, pkg.category].join(' ').toLowerCase().includes(q.toLowerCase());
+    return categoryMatch && priceMatch && textMatch;
   });
 
   return (
@@ -61,7 +73,10 @@ export default function Tours() {
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setSelectedSubcategory('All');
+                  }}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === cat
                       ? 'bg-primary text-white'
@@ -72,6 +87,21 @@ export default function Tours() {
                 </button>
               ))}
             </div>
+            {selectedCategory !== 'All' && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-charcoal-text mb-2">Subcategory</label>
+                <select
+                  value={selectedSubcategory}
+                  onChange={(e) => setSelectedSubcategory(e.target.value)}
+                  className="w-full px-4 py-2 border border-warm-stone rounded-lg focus:outline-none focus:border-primary"
+                >
+                  <option value="All">All</option>
+                  {packageCategories[selectedCategory].map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <select
               value={priceRange}
               onChange={(e) => setPriceRange(e.target.value)}
@@ -113,12 +143,24 @@ export default function Tours() {
                           </svg>
                           {pkg.duration}
                         </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-yellow-400">{getAverageRating(pkg.reviews).toFixed(1)} ★</span>
+                          <span>{pkg.reviews?.length ? `(${pkg.reviews.length} reviews)` : 'No reviews yet'}</span>
+                        </div>
                       </div>
                       <h3 className="text-xl font-semibold font-manrope text-charcoal-text mb-2">{pkg.title}</h3>
                       <p className="text-gray-600 mb-4 text-sm">{pkg.description}</p>
+                      <div className="flex items-center justify-between mb-3 gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">{pkg.category}</span>
+                          {pkg.subcategory && (
+                            <span className="text-xs font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded-full">{pkg.subcategory}</span>
+                          )}
+                        </div>
+                      </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-primary font-bold text-2xl">${pkg.price}</span>
+                          <span className="text-primary font-bold text-2xl">{formatPrice(pkg.price, pkg.currency)}</span>
                           <span className="text-gray-500 text-sm">/person</span>
                         </div>
                         <Button size="sm">View Details</Button>

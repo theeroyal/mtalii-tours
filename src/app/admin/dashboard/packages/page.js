@@ -89,9 +89,16 @@ export default function PackagesManager() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="text-lg font-semibold font-manrope text-charcoal-text">{pkg.title}</h3>
-                        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                          {pkg.category}
-                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                            {pkg.category}
+                          </span>
+                          {pkg.subcategory && (
+                            <span className="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-1 rounded-full">
+                              {pkg.subcategory}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className="text-2xl font-bold text-primary">{formatPrice(pkg)}</span>
                     </div>

@@ -1,5 +1,5 @@
 export default function WhatsAppButton() {
-  const phoneNumber = '254710751411'; // Replace with your WhatsApp number
+  const phoneNumber = '254742932438'; // Replace with your WhatsApp number
   const message = encodeURIComponent('Hi! I\'m interested in booking a tour with Mtalii Tours');
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 

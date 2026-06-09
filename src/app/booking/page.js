@@ -5,8 +5,9 @@ import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
-import { tourPackages } from '@/lib/data';
-import { useState } from 'react';
+import { tourPackages as defaultPackages } from '@/lib/data';
+import { formatPrice } from '@/lib/currency';
+import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
 
 export default function Booking() {
@@ -16,6 +17,7 @@ export default function Booking() {
   const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_BOOKING;
   const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
 
+  const [tourPackages, setTourPackages] = useState([]);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     tour: '',
@@ -26,6 +28,14 @@ export default function Booking() {
     phone: '',
     notes: ''
   });
+
+  useEffect(() => {
+    let storedPackages = JSON.parse(localStorage.getItem('mtalii_packages'));
+    if (!storedPackages) {
+      storedPackages = defaultPackages;
+    }
+    setTourPackages(storedPackages);
+  }, []);
 
   const selectedTour = tourPackages.find(t => t.id === parseInt(formData.tour));
   const totalGuests = parseInt(formData.guests);
@@ -145,7 +155,7 @@ export default function Booking() {
                       <option value="">Select a tour package...</option>
                       {tourPackages.map((pkg) => (
                         <option key={pkg.id} value={pkg.id}>
-                          {pkg.title} - ${pkg.price}/person ({pkg.duration})
+                          {pkg.title} - {formatPrice(pkg.price, pkg.currency)}/person ({pkg.duration})
                         </option>
                       ))}
                     </select>
@@ -278,11 +288,11 @@ export default function Booking() {
                     <hr className="my-3" />
                     <div className="flex justify-between">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-medium text-lg">${subtotal.toLocaleString()}</span>
+                      <span className="font-medium text-lg">{formatPrice(subtotal, selectedTour?.currency)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-500">
                       <span>Deposit (30%):</span>
-                      <span>${deposit.toLocaleString()}</span>
+                      <span>{formatPrice(deposit, selectedTour?.currency)}</span>
                     </div>
                   </div>
                 </div>

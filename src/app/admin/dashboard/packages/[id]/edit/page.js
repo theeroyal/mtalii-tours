@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import { isLoggedIn } from '@/lib/auth';
+import { packageCategories } from '@/lib/data';
 
 export default function EditPackage() {
   const { id } = useParams();
@@ -24,7 +25,8 @@ export default function EditPackage() {
     currency: 'USD',
     duration: '',
     image: '',
-    category: 'Safari',
+    category: 'Safaris',
+    subcategory: packageCategories['Safaris'][0],
     inclusions: '',
     highlights: ''
   });
@@ -50,6 +52,7 @@ export default function EditPackage() {
           duration: pkg.duration,
           image: pkg.image || '',
           category: pkg.category,
+          subcategory: pkg.subcategory || packageCategories[pkg.category]?.[0] || '',
           inclusions: pkg.inclusions.join(', '),
           highlights: pkg.highlights.join(', ')
         });
@@ -59,9 +62,16 @@ export default function EditPackage() {
   }, [id]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      if (name === 'category') {
+        updated.subcategory = packageCategories[value]?.[0] || '';
+      }
+      return updated;
     });
   };
 
@@ -87,6 +97,7 @@ export default function EditPackage() {
           duration: formData.duration,
           image: formData.image || 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80',
           category: formData.category,
+          subcategory: formData.subcategory,
           inclusions: inclusionsArray,
           highlights: highlightsArray
         };
@@ -185,12 +196,25 @@ export default function EditPackage() {
                   className="w-full px-4 py-3 border border-warm-stone rounded-lg focus:outline-none focus:border-primary"
                   required
                 >
-                  <option value="Safari">Safari</option>
-                  <option value="Trekking">Trekking</option>
-                  <option value="Beach">Beach</option>
-                  <option value="Cultural">Cultural</option>
+                  {Object.keys(packageCategories).map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal-text mb-2">Subcategory</label>
+              <select
+                name="subcategory"
+                value={formData.subcategory}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-warm-stone rounded-lg focus:outline-none focus:border-primary"
+                required
+              >
+                {packageCategories[formData.category].map((sub) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
             </div>
 
             <div>

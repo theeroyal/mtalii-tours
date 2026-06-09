@@ -3,10 +3,21 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
-import { destinations } from '@/lib/data';
+import { destinations as defaultDestinations } from '@/lib/data';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function Destinations() {
+  const [destinations, setDestinations] = useState([]);
+
+  useEffect(() => {
+    let storedDestinations = JSON.parse(localStorage.getItem('mtalii_destinations'));
+    if (!storedDestinations) {
+      storedDestinations = defaultDestinations;
+    }
+    setDestinations(storedDestinations);
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Navbar />

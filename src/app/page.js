@@ -7,8 +7,10 @@ import Button from '@/components/Button';
 import Card from '@/components/Card';
 import AnimatedSection from '@/components/AnimatedSection';
 import { tourPackages as defaultPackages, destinations as defaultDestinations, testimonials, blogPosts as defaultBlogPosts } from '@/lib/data';
+import { formatPrice } from '@/lib/currency';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [tourPackages, setTourPackages] = useState([]);
@@ -16,24 +18,32 @@ export default function Home() {
   const [blogPosts, setBlogPosts] = useState([]);
 
   useEffect(() => {
-    let storedPackages = JSON.parse(localStorage.getItem('mtalii_packages'));
-    if (!storedPackages) {
-      storedPackages = defaultPackages;
-    }
-    setTourPackages(storedPackages);
-
-    let storedDestinations = JSON.parse(localStorage.getItem('mtalii_destinations'));
-    if (!storedDestinations) {
-      storedDestinations = defaultDestinations;
-    }
-    setDestinations(storedDestinations);
-
-    let storedBlogPosts = JSON.parse(localStorage.getItem('mtalii_blog_posts'));
-    if (!storedBlogPosts) {
-      storedBlogPosts = defaultBlogPosts;
-    }
-    setBlogPosts(storedBlogPosts);
+    // Homepage should show only the curated default content.
+    // Admin-added items (stored in localStorage) will still be available
+    // on their specific listing/detail pages (e.g., /tours, /destinations, /blog).
+    setTourPackages(defaultPackages);
+    setDestinations(defaultDestinations);
+    setBlogPosts(defaultBlogPosts);
   }, []);
+
+  const router = useRouter();
+  const [searchDest, setSearchDest] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+  const [searchGuests, setSearchGuests] = useState('1');
+
+  const getAverageRating = (reviews = []) => {
+    if (!reviews.length) return 0;
+    return reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length;
+  };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchDest) params.set('q', searchDest);
+    if (searchDate) params.set('date', searchDate);
+    if (searchGuests) params.set('guests', searchGuests);
+    const query = params.toString();
+    router.push(`/tours${query ? `?${query}` : ''}`);
+  };
 
   return (
     <div className="min-h-screen">
@@ -79,6 +89,8 @@ export default function Home() {
             <label className="block text-sm font-medium text-charcoal-text mb-2">Destination</label>
             <input
               type="text"
+              value={searchDest}
+              onChange={(e) => setSearchDest(e.target.value)}
               placeholder="Where to?"
               className="w-full px-4 py-3 border border-warm-stone rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
@@ -87,20 +99,22 @@ export default function Home() {
             <label className="block text-sm font-medium text-charcoal-text mb-2">Check In</label>
             <input
               type="date"
+              value={searchDate}
+              onChange={(e) => setSearchDate(e.target.value)}
               className="w-full px-4 py-3 border border-warm-stone rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-charcoal-text mb-2">Guests</label>
-            <select className="w-full px-4 py-3 border border-warm-stone rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-              <option>1 Guest</option>
-              <option>2 Guests</option>
-              <option>3 Guests</option>
-              <option>4+ Guests</option>
+            <select value={searchGuests} onChange={(e) => setSearchGuests(e.target.value)} className="w-full px-4 py-3 border border-warm-stone rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              <option value="1">1 Guest</option>
+              <option value="2">2 Guests</option>
+              <option value="3">3 Guests</option>
+              <option value="4">4+ Guests</option>
             </select>
           </div>
           <div>
-            <Button className="w-full">Search Tours</Button>
+            <Button className="w-full" onClick={handleSearch}>Search Tours</Button>
           </div>
         </div>
       </AnimatedSection>
@@ -128,24 +142,35 @@ export default function Home() {
                         alt={pkg.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      <div className="absolute top-4 left-4">
+                      <div className="absolute top-4 left-4 flex flex-col gap-2">
                         <span className="px-3 py-1 bg-sand-light text-primary text-sm font-semibold rounded-full">
                           {pkg.category}
                         </span>
+                        {pkg.subcategory && (
+                          <span className="px-3 py-1 bg-white/90 text-slate-700 text-xs font-semibold rounded-full">
+                            {pkg.subcategory}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="p-6">
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {pkg.duration}
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-500 mb-2">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {pkg.duration}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400">{pkg.reviews?.length ? getAverageRating(pkg.reviews).toFixed(1) : 'New'}</span>
+                          <span>{pkg.reviews?.length ? `(${pkg.reviews.length} reviews)` : 'No reviews yet'}</span>
+                        </div>
                       </div>
                       <h3 className="text-xl font-semibold font-manrope text-charcoal-text mb-2">{pkg.title}</h3>
                       <p className="text-gray-600 mb-4 text-sm">{pkg.description}</p>
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-primary font-bold text-2xl">${pkg.price}</span>
+                          <span className="text-primary font-bold text-2xl">{formatPrice(pkg.price, pkg.currency)}</span>
                           <span className="text-gray-500 text-sm">/person</span>
                         </div>
                       </div>

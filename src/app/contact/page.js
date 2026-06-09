@@ -11,6 +11,8 @@ import emailjs from '@emailjs/browser';
 export default function Contact() {
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'mtaliitoursandadventures@gmail.com';
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP || '254742932438';
+  const whatsappDisplayNumber = whatsappNumber.startsWith('+') ? whatsappNumber : `+${whatsappNumber}`;
+  const whatsappLinkNumber = whatsappNumber.replace(/^\+/, '');
   const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || '#';
   const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || '#';
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || '#';
@@ -123,12 +125,12 @@ export default function Contact() {
                   <div>
                     <h3 className="text-lg font-semibold font-manrope text-charcoal-text mb-1">WhatsApp</h3>
                     <a
-                      href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hello Mtalii Tours and Adventures, I would like to inquire about your travel services.')}`}
+                      href={`https://wa.me/${whatsappLinkNumber}?text=${encodeURIComponent('Hello Mtalii Tours and Adventures, I would like to inquire about your travel services.')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-600 hover:text-primary transition-colors"
                     >
-                      +{whatsappNumber}
+                      {whatsappDisplayNumber}
                     </a>
                   </div>
                 </div>
