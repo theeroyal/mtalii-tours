@@ -9,13 +9,14 @@ import { tourPackages as defaultPackages, packageCategories } from '@/lib/data';
 import { formatPrice } from '@/lib/currency';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+
 
 export default function Tours() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [priceRange, setPriceRange] = useState('All');
   const [tourPackages, setTourPackages] = useState([]);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
     // Load packages from localStorage or use default data
@@ -34,9 +35,12 @@ export default function Tours() {
     { label: 'Over $2000', min: 2000, max: Infinity },
   ];
 
-  const searchParams = useSearchParams();
-  const q = searchParams ? searchParams.get('q') || '' : '';
-
+ useEffect(() => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    setQ(params.get('q') || '');
+  }
+}, []);
   const getAverageRating = (reviews = []) => {
     if (!reviews || !reviews.length) return 0;
     return reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length;
